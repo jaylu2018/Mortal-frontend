@@ -4,15 +4,19 @@ import Motion from "./utils/motion";
 import { useRouter } from "vue-router";
 import { message } from "@/utils/message";
 import { loginRules } from "./utils/rule";
+import TypeIt from "@/components/ReTypeit";
+import { debounce } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
+import { useEventListener } from "@vueuse/core";
 import type { FormInstance } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useUserStoreHook } from "@/store/modules/user";
 import { initRouter, getTopMenu } from "@/router/utils";
 import { bg, avatar, illustration } from "./utils/static";
+import { ReImageVerify } from "@/components/ReImageVerify";
+import { ref, toRaw, reactive, watch, computed } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { ref, reactive, toRaw, onMounted, onBeforeUnmount } from "vue";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 
@@ -22,64 +26,84 @@ import globalization from "@/assets/svg/globalization.svg?component";
 import Lock from "@iconify-icons/ri/lock-fill";
 import Check from "@iconify-icons/ep/check";
 import User from "@iconify-icons/ri/user-3-fill";
+import Info from "@iconify-icons/ri/information-line";
 
 defineOptions({
   name: "Login"
 });
+
+const imgCode = ref("");
+const loginDay = ref(7);
 const router = useRouter();
 const loading = ref(false);
+const checked = ref(false);
+const disabled = ref(false);
 const ruleFormRef = ref<FormInstance>();
-
-const { initStorage } = useLayout();
-initStorage();
+const currentPage = computed(() => {
+  return useUserStoreHook().currentPage;
+});
 
 const { t } = useI18n();
-const { dataTheme, dataThemeChange } = useDataThemeChange();
-dataThemeChange();
+const { initStorage } = useLayout();
+initStorage();
+const { dataTheme, overallStyle, dataThemeChange } = useDataThemeChange();
+dataThemeChange(overallStyle.value);
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
 
 const ruleForm = reactive({
   username: "admin",
-  password: "admin123"
+  password: "admin123",
+  verifyCode: ""
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
-  loading.value = true;
   if (!formEl) return;
   await formEl.validate((valid, fields) => {
     if (valid) {
+      loading.value = true;
       useUserStoreHook()
         .loginByUsername({ username: ruleForm.username, password: "admin123" })
         .then(res => {
           if (res.success) {
             // 获取后端路由
-            initRouter().then(() => {
-              router.push(getTopMenu(true).path);
-              message("登录成功", { type: "success" });
+            return initRouter().then(() => {
+              disabled.value = true;
+              router
+                .push(getTopMenu(true).path)
+                .then(() => {
+                  message("登录成功", { type: "success" });
+                })
+                .finally(() => (disabled.value = false));
             });
           }
-        });
+        })
+        .finally(() => (loading.value = false));
     } else {
-      loading.value = false;
       return fields;
     }
   });
 };
 
-/** 使用公共函数，避免`removeEventListener`失效 */
-function onkeypress({ code }: KeyboardEvent) {
-  if (code === "Enter") {
-    onLogin(ruleFormRef.value);
-  }
-}
+const immediateDebounce: any = debounce(
+  formRef => onLogin(formRef),
+  1000,
+  true
+);
 
-onMounted(() => {
-  window.document.addEventListener("keypress", onkeypress);
+useEventListener(document, "keypress", ({ code }) => {
+  if (code === "Enter" && !disabled.value && !loading.value)
+    immediateDebounce(ruleFormRef.value);
 });
 
-onBeforeUnmount(() => {
-  window.document.removeEventListener("keypress", onkeypress);
+watch(imgCode, value => {
+  useUserStoreHook().SET_VERIFYCODE(value);
+});
+watch(checked, bool => {
+  useUserStoreHook().SET_ISREMEMBERED(bool);
+});
+watch(loginDay, value => {
+  useUserStoreHook().SET_LOGINDAY(value);
 });
 </script>
 
@@ -136,10 +160,15 @@ onBeforeUnmount(() => {
         <div class="login-form">
           <avatar class="avatar" />
           <Motion>
-            <h2 class="outline-none">{{ title }}</h2>
+            <h2 class="outline-none">
+              <TypeIt
+                :options="{ strings: [title], cursor: false, speed: 100 }"
+              />
+            </h2>
           </Motion>
 
           <el-form
+            v-if="currentPage === 0"
             ref="ruleFormRef"
             :model="ruleForm"
             :rules="loginRules"
@@ -177,20 +206,50 @@ onBeforeUnmount(() => {
               </el-form-item>
             </Motion>
 
+            <Motion :delay="200">
+              <el-form-item prop="verifyCode">
+                <el-input
+                  v-model="ruleForm.verifyCode"
+                  clearable
+                  :placeholder="t('login.verifyCode')"
+                  :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
+                >
+                  <template v-slot:append>
+                    <ReImageVerify v-model:code="imgCode" />
+                  </template>
+                </el-input>
+              </el-form-item>
+            </Motion>
+
             <Motion :delay="250">
-              <el-button
-                class="w-full mt-4"
-                size="default"
-                type="primary"
-                :loading="loading"
-                @click="onLogin(ruleFormRef)"
-              >
-                {{ t("login.login") }}
-              </el-button>
+              <el-form-item>
+                <el-button
+                  class="w-full mt-4"
+                  size="default"
+                  type="primary"
+                  :loading="loading"
+                  :disabled="disabled"
+                  @click="onLogin(ruleFormRef)"
+                >
+                  {{ t("login.login") }}
+                </el-button>
+              </el-form-item>
             </Motion>
           </el-form>
         </div>
       </div>
+    </div>
+    <div
+      class="w-full flex-c absolute bottom-3 text-sm text-[rgba(0,0,0,0.6)] dark:text-[rgba(220,220,242,0.8)]"
+    >
+      Copyright © 2020-present
+      <a
+        class="hover:text-primary"
+        href="https://github.com/pure-admin"
+        target="_blank"
+      >
+        &nbsp;{{ title }}
+      </a>
     </div>
   </div>
 </template>

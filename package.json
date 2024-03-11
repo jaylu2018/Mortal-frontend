@@ -55,6 +55,7 @@
     "pinia": "^2.1.7",
     "pinyin-pro": "^3.19.6",
     "qs": "^6.11.2",
+    "typeit": "^8.8.3",
     "responsive-storage": "^2.2.0",
     "sortablejs": "^1.15.2",
     "vue": "^3.4.21",
