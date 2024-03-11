@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { $t } from "@/plugins/i18n";
 import { emitter } from "@/utils/mitt";
 import { RouteConfigs } from "../../types";
 import { useTags } from "../../hooks/useTag";
@@ -47,6 +48,7 @@ const {
   onMounted,
   onMouseenter,
   onMouseleave,
+  transformI18n,
   onContentFullScreen
 } = useTags();
 
@@ -332,10 +334,10 @@ function onClickDrop(key, item, selectRoute?: RouteConfigs) {
       setTimeout(() => {
         if (isFullscreen.value) {
           tagsViews[6].icon = ExitFullscreen;
-          tagsViews[6].text = "退出全屏";
+          tagsViews[6].text = $t("buttons.hswholeExitFullScreen");
         } else {
           tagsViews[6].icon = Fullscreen;
-          tagsViews[6].text = "全屏";
+          tagsViews[6].text = $t("buttons.hswholeFullScreen");
         }
       }, 100);
       break;
@@ -345,10 +347,10 @@ function onClickDrop(key, item, selectRoute?: RouteConfigs) {
       setTimeout(() => {
         if (pureSetting.hiddenSideBar) {
           tagsViews[7].icon = ExitFullscreen;
-          tagsViews[7].text = "内容区退出全屏";
+          tagsViews[7].text = $t("buttons.hscontentExitFullScreen");
         } else {
           tagsViews[7].icon = Fullscreen;
-          tagsViews[7].text = "内容区全屏";
+          tagsViews[7].text = $t("buttons.hscontentFullScreen");
         }
       }, 100);
       break;
@@ -511,7 +513,7 @@ watch(route, () => {
 
 watch(isFullscreen, () => {
   tagsViews[6].icon = Fullscreen;
-  tagsViews[6].text = "全屏";
+  tagsViews[6].text = $t("buttons.hswholeFullScreen");
 });
 
 onMounted(() => {
@@ -575,7 +577,7 @@ onBeforeUnmount(() => {
           <span
             class="tag-title dark:!text-text_color_primary dark:hover:!text-primary"
           >
-            {{ item.meta.title }}
+            {{ transformI18n(item.meta.title) }}
           </span>
           <span
             v-if="
@@ -614,7 +616,7 @@ onBeforeUnmount(() => {
         >
           <li v-if="item.show" @click="selectTag(key, item)">
             <IconifyIconOffline :icon="item.icon" />
-            {{ item.text }}
+            {{ transformI18n(item.text) }}
           </li>
         </div>
       </ul>
@@ -638,7 +640,7 @@ onBeforeUnmount(() => {
             :disabled="item.disabled"
           >
             <IconifyIconOffline :icon="item.icon" />
-            {{ item.text }}
+            {{ transformI18n(item.text) }}
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
