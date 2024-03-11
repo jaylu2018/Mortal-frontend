@@ -1,6 +1,6 @@
 {
-  "name": "pure-admin-thin",
-  "version": "5.1.0",
+  "name": "mortal",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,29 +23,18 @@
     "preinstall": "npx only-allow pnpm"
   },
   "keywords": [
-    "vue-pure-admin",
     "element-plus",
     "tailwindcss",
-    "pure-admin",
     "typescript",
     "pinia",
     "vue3",
     "vite",
     "esm"
   ],
-  "homepage": "https://github.com/pure-admin/pure-admin-thin",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/pure-admin/pure-admin-thin.git"
-  },
-  "bugs": {
-    "url": "https://github.com/pure-admin/pure-admin-thin/issues"
-  },
   "license": "MIT",
   "author": {
-    "name": "xiaoxian521",
-    "email": "pureadmin@163.com",
-    "url": "https://github.com/xiaoxian521"
+    "name": "luyh",
+    "email": "jaylu1995@outlook.com"
   },
   "dependencies": {
     "@pureadmin/descriptions": "^1.2.0",
