@@ -263,7 +263,8 @@ watch(loginDay, value => {
 }
 
 .avatar {
-  height: 25vw;
+  width: 100%;
+  height: 100%;
 }
 
 .translation {
